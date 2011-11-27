@@ -4,7 +4,7 @@
 
 Name:		apache-resource-bundles
 Version:	2
-Release:	6
+Release:	8
 Summary:	Apache Resource Bundles
 
 Group:		Development/Java
