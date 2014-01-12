@@ -1,13 +1,14 @@
+%{?_javapackages_macros:%_javapackages_macros}
 %global jar_version 1.4
 %global lh_version 1.1
 %global id_version 1.1
 
 Name:		apache-resource-bundles
 Version:	2
-Release:	8
+Release:	11.1%{?dist}
 Summary:	Apache Resource Bundles
 
-Group:		Development/Java
+
 License:	ASL 2.0
 URL:		http://repo1.maven.org/maven2/org/apache/apache-resource-bundles/
 Source0:	http://repo1.maven.org/maven2/org/apache/%{name}/%{version}/%{name}-%{version}.pom
@@ -18,12 +19,7 @@ Source4:	http://repo1.maven.org/maven2/org/apache/apache-license-header-resource
 Source5:	http://repo1.maven.org/maven2/org/apache/apache-incubator-disclaimer-resource-bundle/%{id_version}/apache-incubator-disclaimer-resource-bundle-%{id_version}-sources.jar
 Source6:	http://repo1.maven.org/maven2/org/apache/apache-incubator-disclaimer-resource-bundle/%{id_version}/apache-incubator-disclaimer-resource-bundle-%{id_version}.pom
 
-# Remove maven-release plugin (not yet available on Fedora)
-Patch0:		apache-resource-bundles-cleanup-poms.patch
-
-BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-
-BuildRequires:	maven2
+BuildRequires:	maven-local
 BuildRequires:	maven-compiler-plugin
 BuildRequires:	maven-install-plugin
 BuildRequires:	maven-jar-plugin
@@ -31,12 +27,6 @@ BuildRequires:	maven-remote-resources-plugin
 BuildRequires:	maven-resources-plugin
 BuildRequires:	maven-surefire-plugin
 BuildRequires:  maven-site-plugin
-
-# Requirements from the POMs
-Requires:	maven-remote-resources-plugin
-
-Requires(post):	jpackage-utils
-Requires(postun): jpackage-utils
 
 BuildArch:	noarch
 
@@ -47,7 +37,6 @@ and notices for all Apache releases.
 %prep
 %setup -c -T
 cp %SOURCE0 ./pom.xml
-%patch0 -p1
 
 # jar
 mkdir -p apache-jar-resource-bundle
@@ -78,72 +67,50 @@ popd
 
 
 %build
-export MAVEN_REPO_LOCAL=$(pwd)/.m2/repository
-mkdir -p $MAVEN_REPO_LOCAL
-
-mvn-jpp \
-	-Dmaven.repo.local=$MAVEN_REPO_LOCAL \
-	install
+%mvn_file :apache-jar-resource-bundle apache-resource-bundles/jar
+%mvn_file :apache-license-header-resource-bundle apache-resource-bundles/license-header
+%mvn_file :apache-incubator-disclaimer-resource-bundle apache-resource-bundles/incubator-disclaimer
+%mvn_build
 
 %install
-rm -rf $RPM_BUILD_ROOT
+%mvn_install
 
-install -d -m 755 $RPM_BUILD_ROOT%{_javadir}/%{name}
-install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
+%files -f .mfiles
 
-# jar
-# 
-pushd apache-jar-resource-bundle
-install -m 644 \
-	target/apache-jar-resource-bundle-%{jar_version}.jar \
-	$RPM_BUILD_ROOT%{_javadir}/%{name}/jar-%{jar_version}.jar
-cp pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-jar.pom
-%add_to_maven_depmap org.apache apache-jar-resource-bundle %{jar_version} JPP/%{name} jar
-popd
+%changelog
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2-11
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
-# license-header
-pushd apache-license-header-resource-bundle
-install -m 644 \
-	target/apache-license-header-resource-bundle-%{lh_version}.jar \
-	$RPM_BUILD_ROOT%{_javadir}/%{name}/license-header-%{lh_version}.jar
-cp pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-license-header.pom
-%add_to_maven_depmap org.apache apache-license-header-resource-bundle %{lh_version} JPP/%{name} license-header
-popd
+* Wed Feb 06 2013 Java SIG <java-devel@lists.fedoraproject.org> - 2-10
+- Update for https://fedoraproject.org/wiki/Fedora_19_Maven_Rebuild
+- Replace maven BuildRequires with maven-local
 
-# incubator-disclaimer
-pushd apache-incubator-disclaimer-resource-bundle
-install -m 644 \
-	target/apache-incubator-disclaimer-resource-bundle-%{id_version}.jar \
-	$RPM_BUILD_ROOT%{_javadir}/%{name}/incubator-disclaimer-%{id_version}.jar
-cp pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-incubator-disclaimer.pom
-%add_to_maven_depmap org.apache apache-incubator-disclaimer-resource-bundle %{id_version} JPP/%{name} incubator-disclaimer
-popd
+* Wed Jan 16 2013 Michal Srb <msrb@redhat.com> - 2-9
+- Build with xmvn
 
-# Unversioned jars
-pushd $RPM_BUILD_ROOT%{_javadir}/%{name}
-ln -sf jar-%{jar_version}.jar jar.jar
-ln -sf license-header-%{lh_version}.jar license-header.jar
-ln -sf incubator-disclaimer-%{id_version}.jar incubator-disclaimer.jar
-popd
+* Wed Jul 18 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
-# Add parent to depmap too
-cp pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
-%add_to_maven_depmap org.apache %{name} %{version} JPP %{name}
+* Thu Jan 12 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
-%clean
-rm -rf $RPM_BUILD_ROOT
+* Mon Feb 07 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
 
-%post
-%update_maven_depmap
+* Thu Nov 25 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 2-5
+- Fix pom file names and add_to_maven_depmap calls (Resolves rhbz#655790)
 
-%postun
-%update_maven_depmap
+* Wed Sep 8 2010 Alexander Kurtakov <akurtako@redhat.com> 2-4
+- Add maven-site-plugin BR.
+- Use newer names of maven plugins.
 
-%files
-%defattr(-,root,root,-)
-%{_javadir}/%{name}
-%config(noreplace) %{_mavendepmapfragdir}/*
-%{_mavenpomdir}/*.pom
+* Mon Feb  1 2010 Mary Ellen Foster <mefoster at gmail.com> 2-3
+- Fix license 
 
+* Tue Jan 19 2010 Mary Ellen Foster <mefoster at gmail.com> 2-2
+- Add plugin dependencies from POMs
+- Fix description
+- Remove maven-release plugin (not on Fedora yet)
 
-
+* Mon Jan 18 2010 Mary Ellen Foster <mefoster at gmail.com> 2-1
+- Initial package
