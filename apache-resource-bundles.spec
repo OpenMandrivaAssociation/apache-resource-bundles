@@ -10,7 +10,7 @@ Summary:	Apache Resource Bundles
 
 
 License:	ASL 2.0
-URL:		http://repo1.maven.org/maven2/org/apache/apache-resource-bundles/
+URL:		https://repo1.maven.org/maven2/org/apache/apache-resource-bundles/
 Source0:	http://repo1.maven.org/maven2/org/apache/%{name}/%{version}/%{name}-%{version}.pom
 Source1:	http://repo1.maven.org/maven2/org/apache/apache-jar-resource-bundle/%{jar_version}/apache-jar-resource-bundle-%{jar_version}-sources.jar
 Source2:	http://repo1.maven.org/maven2/org/apache/apache-jar-resource-bundle/%{jar_version}/apache-jar-resource-bundle-%{jar_version}.pom
